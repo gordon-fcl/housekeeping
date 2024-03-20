@@ -1,0 +1,61 @@
+{
+    "name": "ediblemanager/housekeeping",
+    "description": "A simple package to view specific issues from GitHub.",
+    "keywords": [
+        "php",
+        "housekeeping",
+        "issues",
+        "package"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gordon Thomson",
+            "email": "gordonthomson@protonmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2.0",
+        "laravel/prompts": "^0.1.16"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.13.7",
+        "pestphp/pest": "^2.28.1",
+        "phpstan/phpstan": "^1.10.50",
+        "rector/rector": "^0.18.13",
+        "symfony/var-dumper": "^6.4.0|^7.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ediblemanager\\Housekeeping\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "refacto": "rector",
+        "lint": "pint",
+        "test:refacto": "rector --dry-run",
+        "test:lint": "pint --test",
+        "test:types": "phpstan analyse --ansi",
+        "test:unit": "pest --colors=always",
+        "test": [
+            "@test:refacto",
+            "@test:lint",
+            "@test:types",
+            "@test:unit"
+        ]
+    }
+}
