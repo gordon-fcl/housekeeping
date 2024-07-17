@@ -7,8 +7,16 @@ use Ediblemanager\Housekeeping\Console\Commands\HousekeepingCommand;
 
 class PackageServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function register()
     {
-        $this->commands([GreetCommand::class]);
+        // Register GrahamCampbell's GitHub package service provider
+        $this->app->register(\GrahamCampbell\GitHub\GitHubServiceProvider::class);
+    }
+
+    public function boot(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([HousekeepingCommand::class]);
+        }
     }
 }
