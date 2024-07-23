@@ -12,12 +12,24 @@ use GrahamCampbell\GitHub\Facades\GitHub;
 final class Housekeeping
 {
     /**
+     * @param string $
+     * @param array $options
      * @return array
      */
-    public function getIssueLabels(): array
+    public function getRepos(): array
     {
         /** phpstan-ignore-next-line */
-        return GitHub::issues()->labels()->all('ediblemanager', 'housekeeping');
+        return GitHub::me()->repositories();
+    }
+
+    /**
+     * @return array
+     */
+    public function getRepoLabels(string $repo): array
+    {
+        /** phpstan-ignore-next-line */
+        $username = GitHub::api('currentUser')->show()['login'];
+        return GitHub::api('repo')->labels()->all($username, $repo);
     }
 
     /**
@@ -25,10 +37,11 @@ final class Housekeeping
      * @param array $options
      * @return array
      */
-    public function getIssues(string $label = "housekeeping", array $options = ['order' => 'date:asc']): array
+    public function getIssues(string $repo, string $label = "housekeeping", array $options = ['order' => 'date:asc']): array
     {
         /** phpstan-ignore-next-line */
-        return GitHub::api('issue')->all('ediblemanager', 'housekeeping', ['state' => 'open', 'labels' => $label]);
+        $username = GitHub::api('currentUser')->show()['login'];
+        return GitHub::api('issues')->all($username, $repo, ['state' => 'open', 'labels' => $label]);
     }
 
     /**
