@@ -1,47 +1,90 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/nunomaduro/skeleton-php/master/docs/example.png" height="300" alt="Skeleton Php">
-    <p align="center">
-        <a href="https://github.com/nunomaduro/skeleton-php/actions"><img alt="GitHub Workflow Status (master)" src="https://github.com/nunomaduro/skeleton-php/actions/workflows/tests.yml/badge.svg"></a>
-        <a href="https://packagist.org/packages/nunomaduro/skeleton-php"><img alt="Total Downloads" src="https://img.shields.io/packagist/dt/nunomaduro/skeleton-php"></a>
-        <a href="https://packagist.org/packages/nunomaduro/skeleton-php"><img alt="Latest Version" src="https://img.shields.io/packagist/v/nunomaduro/skeleton-php"></a>
-        <a href="https://packagist.org/packages/nunomaduro/skeleton-php"><img alt="License" src="https://img.shields.io/packagist/l/nunomaduro/skeleton-php"></a>
-    </p>
-</p>
+# Housekeeping
 
-------
-This package provides a wonderful **PHP Skeleton** to start building your next package idea.
+A Laravel package that brings GitHub issue management into the terminal, reducing context switching and keeping developers in flow.
 
-> **Requires [PHP 8.2+](https://php.net/releases/)**
+## Requirements
 
-⚡️ Create your package using [Composer](https://getcomposer.org):
+- PHP 8.2+
+- Laravel 10 or 11
+
+## Installation
 
 ```bash
-composer create-project nunomaduro/skeleton-php --prefer-source PackageName
+composer require gordon-fcl/housekeeping
 ```
 
-🧹 Keep a modern codebase with **Pint**:
+The service provider is auto-discovered. No manual registration needed.
+
+## Configuration
+
+Add your GitHub personal access token to `.env`:
+
+```
+GITHUB_TOKEN=ghp_your_token_here
+```
+
+The token needs `repo` scope to read issues and labels.
+
+Optionally publish the config to customise the default label and base branch:
+
 ```bash
-composer lint
+php artisan vendor:publish --tag=housekeeping-config
 ```
 
-✅ Run refactors using **Rector**
+This creates `config/housekeeping.php` where you can set:
+
+- `HOUSEKEEPING_LABEL` - default issue label to filter by (default: `housekeeping`)
+- `HOUSEKEEPING_BASE_BRANCH` - branch to create working branches from (default: `staging`)
+
+## Usage
+
 ```bash
-composer refacto
+php artisan housekeeping:list
 ```
 
-⚗️ Run static analysis using **PHPStan**:
+This will:
+
+1. Fetch your GitHub repositories
+2. Prompt you to select one
+3. Fetch labels from that repository
+4. Prompt you to select a label (or pass `--tag=bug` to skip)
+5. Display matching issues in a table
+
+### Options
+
 ```bash
-composer test:types
+php artisan housekeeping:list --tag=bug
 ```
 
-✅ Run unit tests using **PEST**
+Skip the label selection prompt by passing a label directly.
+
+## Development
+
 ```bash
-composer test:unit
+git clone https://github.com/gordon-fcl/housekeeping.git
+cd housekeeping
+composer install
 ```
 
-🚀 Run the entire test suite:
+Run the test suite:
+
 ```bash
 composer test
 ```
 
-**Skeleton PHP** was created by **[Nuno Maduro](https://twitter.com/enunomaduro)** under the **[MIT license](https://opensource.org/licenses/MIT)**.
+Individual checks:
+
+```bash
+composer lint          # Pint
+composer test:types    # PHPStan
+composer test:unit     # Pest
+composer refacto       # Rector
+```
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on the fork-and-PR workflow.
+
+## Licence
+
+MIT. See [LICENSE.md](LICENSE.md).
