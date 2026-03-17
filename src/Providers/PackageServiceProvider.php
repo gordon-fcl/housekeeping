@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace FCL\Housekeeping\Providers;
 
+use FCL\Housekeeping\Console\Commands\ExportCommand;
 use FCL\Housekeeping\Console\Commands\HousekeepingCommand;
+use FCL\Housekeeping\Console\Commands\ShowCommand;
+use FCL\Housekeeping\Console\Commands\StartCommand;
 use FCL\Housekeeping\Housekeeping;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,7 +31,12 @@ class PackageServiceProvider extends ServiceProvider
                 __DIR__.'/../../config/housekeeping.php' => config_path('housekeeping.php'),
             ], 'housekeeping-config');
 
-            $this->commands([HousekeepingCommand::class]);
+            $this->commands([
+                HousekeepingCommand::class,
+                ShowCommand::class,
+                StartCommand::class,
+                ExportCommand::class,
+            ]);
         }
     }
 
