@@ -2,54 +2,44 @@
 
 declare(strict_types=1);
 
-namespace Ediblemanager\Housekeeping;
+namespace FCL\Housekeeping;
 
 use GrahamCampbell\GitHub\Facades\GitHub;
 
-/**
- * @internal
- */
 final class Housekeeping
 {
-    /**
-     * @param string $
-     * @param array $options
-     * @return array
-     */
+    /** @return array<int, array<string, mixed>> */
     public function getRepos(): array
     {
-        /** phpstan-ignore-next-line */
+        /** @phpstan-ignore-next-line */
         return GitHub::me()->repositories();
     }
 
-    /**
-     * @return array
-     */
+    /** @return array<int, array<string, mixed>> */
     public function getRepoLabels(string $repo): array
     {
-        /** phpstan-ignore-next-line */
-        $username = GitHub::api('currentUser')->show()['login'];
+        $username = $this->username();
+
+        /** @phpstan-ignore-next-line */
         return GitHub::api('repo')->labels()->all($username, $repo);
     }
 
-    /**
-     * @param string $label
-     * @param array $options
-     * @return array
-     */
-    public function getIssues(string $repo, string $label = "housekeeping", array $options = ['order' => 'date:asc']): array
+    /** @return array<int, array<string, mixed>> */
+    public function getIssues(string $repo, ?string $label = null): array
     {
-        /** phpstan-ignore-next-line */
-        $username = GitHub::api('currentUser')->show()['login'];
-        return GitHub::api('issues')->all($username, $repo, ['state' => 'open', 'labels' => $label]);
+        $username = $this->username();
+        $label ??= config('housekeeping.label', 'housekeeping');
+
+        /** @phpstan-ignore-next-line */
+        return GitHub::api('issues')->all($username, $repo, [
+            'state' => 'open',
+            'labels' => $label,
+        ]);
     }
 
-    /**
-     * @param string $tag
-     * @return void
-     */
-    public function updateTag($tag): void
+    private function username(): string
     {
-        // We'll write the chosen tag to a file in the root dir, housekeeping.yaml
+        /** @phpstan-ignore-next-line */
+        return GitHub::api('currentUser')->show()['login'];
     }
 }
