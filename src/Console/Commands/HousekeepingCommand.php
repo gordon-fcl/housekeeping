@@ -48,10 +48,13 @@ class HousekeepingCommand extends Command
 
     private function labelLoop(): void
     {
-        $labels = collect(spin(
-            fn () => $this->housekeeping->getRepoLabels($this->repo),
-            'Fetching labels...'
-        ));
+        $data = spin(fn () => [
+            'labels' => $this->housekeeping->getRepoLabels($this->repo),
+            'issues' => $this->housekeeping->getAllOpenIssues($this->repo),
+        ], 'Fetching labels and issues...');
+
+        $labels = collect($data['labels']);
+        $allIssues = collect($data['issues']);
 
         if ($labels->isEmpty()) {
             $this->warn("No labels found for {$this->repo}.");
@@ -59,17 +62,35 @@ class HousekeepingCommand extends Command
             return;
         }
 
-        $tag = $this->option('tag');
-        $selectedLabel = $tag ?: $this->selectFrom($labels, "Choose a label from {$this->repo}:");
-        $this->info("Selected: {$selectedLabel}");
+        // Count issues per label
+        $issueCounts = $allIssues
+            ->flatMap(fn (array $issue) => collect($issue['labels'] ?? [])->pluck('name'))
+            ->countBy()
+            ->all();
 
-        $issues = collect(spin(
-            fn () => $this->housekeeping->getIssues($this->repo, $selectedLabel),
-            "Fetching issues from {$this->repo}..."
-        ));
+        $tag = $this->option('tag');
+
+        if (! $tag) {
+            $choices = $labels->mapWithKeys(fn (array $label) => [
+                $label['name'] => $label['name'].' ('.($issueCounts[$label['name']] ?? 0).')',
+            ])->toArray();
+
+            $tag = select(
+                label: "Choose a label from {$this->repo}:",
+                options: $choices,
+                scroll: 10,
+            );
+        }
+
+        $this->info("Selected: {$tag}");
+
+        $issues = $allIssues->filter(fn (array $issue) => collect($issue['labels'] ?? [])
+            ->pluck('name')
+            ->contains($tag)
+        );
 
         if ($issues->isEmpty()) {
-            $this->warn("No issues found with label \"{$selectedLabel}\".");
+            $this->warn("No issues found with label \"{$tag}\".");
             $this->labelLoop();
 
             return;

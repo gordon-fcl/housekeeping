@@ -24,6 +24,15 @@ final class Housekeeping
     }
 
     /** @return array<int, array<string, mixed>> */
+    public function getAllOpenIssues(string $repo): array
+    {
+        /** @phpstan-ignore-next-line */
+        return GitHub::api('issues')->all($this->username(), $repo, [
+            'state' => 'open',
+        ]);
+    }
+
+    /** @return array<int, array<string, mixed>> */
     public function getIssues(string $repo, ?string $label = null): array
     {
         $label ??= config('housekeeping.label', 'housekeeping');
