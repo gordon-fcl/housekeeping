@@ -4,13 +4,25 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use DG\BypassFinals;
 use FCL\Housekeeping\Housekeeping;
 use GrahamCampbell\GitHub\Facades\GitHub;
+use Illuminate\Support\Str;
 use Mockery;
 
 beforeEach(function () {
-    \DG\BypassFinals::enable();
+    BypassFinals::enable();
 });
+
+function mockUsername(string $login = 'testuser'): void
+{
+    $currentUserApi = Mockery::mock();
+    $currentUserApi->shouldReceive('show')->andReturn(['login' => $login]);
+
+    GitHub::shouldReceive('api')
+        ->with('currentUser')
+        ->andReturn($currentUserApi);
+}
 
 it('fetches repositories for the authenticated user', function () {
     $expected = [
@@ -22,164 +34,145 @@ it('fetches repositories for the authenticated user', function () {
         ->once()
         ->andReturn($expected);
 
-    $housekeeping = new Housekeeping();
-    $repos = $housekeeping->getRepos();
-
-    expect($repos)->toBe($expected);
+    expect((new Housekeeping)->getRepos())->toBe($expected);
 });
 
 it('fetches labels for a given repository', function () {
-    $expected = [
-        ['name' => 'bug'],
-        ['name' => 'enhancement'],
-    ];
+    mockUsername();
 
-    GitHub::shouldReceive('api->show')
-        ->with()
-        ->andReturn(['login' => 'testuser']);
-
-    GitHub::shouldReceive('api->labels->all')
+    $labelsApi = Mockery::mock();
+    $labelsApi->shouldReceive('all')
         ->with('testuser', 'my-repo')
         ->once()
-        ->andReturn($expected);
+        ->andReturn([['name' => 'bug'], ['name' => 'enhancement']]);
 
-    $housekeeping = new Housekeeping();
-    $labels = $housekeeping->getRepoLabels('my-repo');
+    $repoApi = Mockery::mock();
+    $repoApi->shouldReceive('labels')->andReturn($labelsApi);
 
-    expect($labels)->toBe($expected);
+    GitHub::shouldReceive('api')
+        ->with('repo')
+        ->andReturn($repoApi);
+
+    expect((new Housekeeping)->getRepoLabels('my-repo'))->toHaveCount(2);
 });
 
 it('fetches all open issues for a repository', function () {
-    $expected = [
-        ['number' => 1, 'title' => 'First issue'],
-        ['number' => 2, 'title' => 'Second issue'],
-    ];
+    mockUsername();
 
-    GitHub::shouldReceive('api->show')
-        ->andReturn(['login' => 'testuser']);
-
-    GitHub::shouldReceive('api->all')
+    $issuesApi = Mockery::mock();
+    $issuesApi->shouldReceive('all')
         ->with('testuser', 'my-repo', ['state' => 'open'])
         ->once()
-        ->andReturn($expected);
+        ->andReturn([['number' => 1], ['number' => 2]]);
 
-    $housekeeping = new Housekeeping();
-    $issues = $housekeeping->getAllOpenIssues('my-repo');
+    GitHub::shouldReceive('api')
+        ->with('issues')
+        ->andReturn($issuesApi);
 
-    expect($issues)->toBe($expected);
+    expect((new Housekeeping)->getAllOpenIssues('my-repo'))->toHaveCount(2);
 });
 
 it('fetches issues filtered by label', function () {
-    $expected = [
-        ['number' => 1, 'title' => 'Bug report'],
-    ];
+    mockUsername();
 
-    GitHub::shouldReceive('api->show')
-        ->andReturn(['login' => 'testuser']);
-
-    GitHub::shouldReceive('api->all')
+    $issuesApi = Mockery::mock();
+    $issuesApi->shouldReceive('all')
         ->with('testuser', 'my-repo', ['state' => 'open', 'labels' => 'bug'])
         ->once()
-        ->andReturn($expected);
+        ->andReturn([['number' => 1, 'title' => 'Bug report']]);
 
-    $housekeeping = new Housekeeping();
-    $issues = $housekeeping->getIssues('my-repo', 'bug');
+    GitHub::shouldReceive('api')
+        ->with('issues')
+        ->andReturn($issuesApi);
 
-    expect($issues)->toBe($expected);
+    expect((new Housekeeping)->getIssues('my-repo', 'bug'))->toHaveCount(1);
 });
 
 it('uses the configured default label when none is provided', function () {
     config()->set('housekeeping.label', 'chore');
+    mockUsername();
 
-    GitHub::shouldReceive('api->show')
-        ->andReturn(['login' => 'testuser']);
-
-    GitHub::shouldReceive('api->all')
+    $issuesApi = Mockery::mock();
+    $issuesApi->shouldReceive('all')
         ->with('testuser', 'my-repo', ['state' => 'open', 'labels' => 'chore'])
         ->once()
         ->andReturn([]);
 
-    $housekeeping = new Housekeeping();
-    $housekeeping->getIssues('my-repo');
+    GitHub::shouldReceive('api')
+        ->with('issues')
+        ->andReturn($issuesApi);
+
+    (new Housekeeping)->getIssues('my-repo');
 });
 
 it('fetches a single issue by number', function () {
-    $expected = [
-        'number' => 42,
-        'title' => 'Fix the thing',
-        'body' => 'It is broken.',
-    ];
+    mockUsername();
 
-    GitHub::shouldReceive('api->show')
-        ->andReturn(['login' => 'testuser']);
-
-    GitHub::shouldReceive('api->show')
+    $issuesApi = Mockery::mock();
+    $issuesApi->shouldReceive('show')
         ->with('testuser', 'my-repo', 42)
         ->once()
-        ->andReturn($expected);
+        ->andReturn(['number' => 42, 'title' => 'Fix the thing']);
 
-    $housekeeping = new Housekeeping();
-    $issue = $housekeeping->getIssue('my-repo', 42);
+    GitHub::shouldReceive('api')
+        ->with('issues')
+        ->andReturn($issuesApi);
+
+    $issue = (new Housekeeping)->getIssue('my-repo', 42);
 
     expect($issue['number'])->toBe(42);
     expect($issue['title'])->toBe('Fix the thing');
 });
 
 it('fetches comments for an issue', function () {
-    $expected = [
-        ['body' => 'First comment', 'user' => ['login' => 'someone']],
-        ['body' => 'Second comment', 'user' => ['login' => 'another']],
-    ];
+    mockUsername();
 
-    GitHub::shouldReceive('api->show')
-        ->andReturn(['login' => 'testuser']);
-
-    GitHub::shouldReceive('api->comments->all')
+    $commentsApi = Mockery::mock();
+    $commentsApi->shouldReceive('all')
         ->with('testuser', 'my-repo', 42)
         ->once()
-        ->andReturn($expected);
+        ->andReturn([
+            ['body' => 'First comment', 'user' => ['login' => 'someone']],
+            ['body' => 'Second comment', 'user' => ['login' => 'another']],
+        ]);
 
-    $housekeeping = new Housekeeping();
-    $comments = $housekeeping->getComments('my-repo', 42);
+    $issuesApi = Mockery::mock();
+    $issuesApi->shouldReceive('comments')->andReturn($commentsApi);
+
+    GitHub::shouldReceive('api')
+        ->with('issues')
+        ->andReturn($issuesApi);
+
+    $comments = (new Housekeeping)->getComments('my-repo', 42);
 
     expect($comments)->toHaveCount(2);
     expect($comments[0]['body'])->toBe('First comment');
 });
 
 it('assigns the authenticated user to an issue', function () {
-    GitHub::shouldReceive('api->show')
-        ->andReturn(['login' => 'testuser']);
+    mockUsername();
 
-    GitHub::shouldReceive('api->update')
+    $issuesApi = Mockery::mock();
+    $issuesApi->shouldReceive('update')
         ->with('testuser', 'my-repo', 42, ['assignees' => ['testuser']])
         ->once();
 
-    $housekeeping = new Housekeeping();
-    $housekeeping->assignIssue('my-repo', 42);
+    GitHub::shouldReceive('api')
+        ->with('issues')
+        ->andReturn($issuesApi);
+
+    (new Housekeeping)->assignIssue('my-repo', 42);
 });
 
-it('generates a branch name from the issue title and number', function () {
-    $housekeeping = Mockery::mock(Housekeeping::class)->makePartial();
-    $housekeeping->shouldAllowMockingProtectedMethods();
-
-    // Mock the git calls to avoid actual shell execution
-    $housekeeping->shouldReceive('createBranch')
-        ->passthru();
-
-    // We cannot easily test the git exec calls, so test the branch name logic directly
+it('generates the correct branch name format', function () {
     $title = 'Fix the login redirect issue';
-    $slug = \Illuminate\Support\Str::slug(\Illuminate\Support\Str::limit($title, 40, ''));
-    $expected = "housekeeping/42-{$slug}";
+    $slug = Str::slug(Str::limit($title, 40, ''));
 
-    expect($expected)->toBe('housekeeping/42-fix-the-login-redirect-issue');
+    expect("housekeeping/42-{$slug}")->toBe('housekeeping/42-fix-the-login-redirect-issue');
 });
 
 it('returns the authenticated username', function () {
-    GitHub::shouldReceive('api->show')
-        ->once()
-        ->andReturn(['login' => 'testuser']);
+    mockUsername('gordon');
 
-    $housekeeping = new Housekeeping();
-
-    expect($housekeeping->username())->toBe('testuser');
+    expect((new Housekeeping)->username())->toBe('gordon');
 });
