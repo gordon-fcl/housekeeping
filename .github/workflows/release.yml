@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+
+    name: PHP ${{ matrix.php }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, mbstring, zip
+          coverage: none
+
+      - run: composer update --prefer-stable --no-interaction --prefer-dist
+
+      - run: composer test
+
+  tag:
+    needs: tests
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.head_commit.message, 'release:')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version and create tag
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | head -1 | sed 's/^release: *//')
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid version: $VERSION"
+            exit 1
+          fi
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
