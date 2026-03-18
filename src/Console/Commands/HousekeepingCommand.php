@@ -28,7 +28,7 @@ class HousekeepingCommand extends Command
         $this->housekeeping = $housekeeping;
 
         $repos = collect(spin(
-            fn () => $housekeeping->getRepos(),
+            fn (): array => $housekeeping->getRepos(),
             'Fetching repositories...'
         ));
 
@@ -48,7 +48,7 @@ class HousekeepingCommand extends Command
 
     private function labelLoop(): void
     {
-        $data = spin(fn () => [
+        $data = spin(fn (): array => [
             'labels' => $this->housekeeping->getRepoLabels($this->repo),
             'issues' => $this->housekeeping->getAllOpenIssues($this->repo),
         ], 'Fetching labels and issues...');
@@ -71,7 +71,7 @@ class HousekeepingCommand extends Command
         $tag = $this->option('tag');
 
         if (! $tag) {
-            $choices = $labels->mapWithKeys(fn (array $label) => [
+            $choices = $labels->mapWithKeys(fn (array $label): array => [
                 $label['name'] => $label['name'].' ('.($issueCounts[$label['name']] ?? 0).')',
             ])->toArray();
 
@@ -99,18 +99,19 @@ class HousekeepingCommand extends Command
         $this->issueList($issues);
     }
 
+    /** @param Collection<int, array<string, mixed>> $issues */
     private function issueList(Collection $issues): void
     {
         table(
             headers: ['#', 'Title', 'Description'],
-            rows: $issues->map(fn (array $issue) => [
+            rows: $issues->map(fn (array $issue): array => [
                 $issue['number'],
                 $issue['title'],
                 str($issue['body'] ?? '')->limit(80),
             ])->toArray()
         );
 
-        $choices = $issues->mapWithKeys(fn (array $issue) => [
+        $choices = $issues->mapWithKeys(fn (array $issue): array => [
             $issue['number'] => "#{$issue['number']} {$issue['title']}",
         ])->toArray();
 
@@ -172,6 +173,7 @@ class HousekeepingCommand extends Command
             'export' => $this->call('housekeeping:export', ['repo' => $this->repo, 'issue' => $number, '--pretty' => true]),
             'back' => $this->labelLoop(),
             'exit' => null,
+            default => null,
         };
     }
 
@@ -181,7 +183,7 @@ class HousekeepingCommand extends Command
         $number = (int) $issue['number'];
 
         $comments = collect(spin(
-            fn () => $this->housekeeping->getComments($this->repo, $number),
+            fn (): array => $this->housekeeping->getComments($this->repo, $number),
             'Fetching comments...'
         ));
 
@@ -199,6 +201,7 @@ class HousekeepingCommand extends Command
         $this->issueActions($issue);
     }
 
+    /** @param Collection<int, array<string, mixed>> $items */
     private function selectFrom(Collection $items, string $label): string
     {
         $names = $items->pluck('name')->toArray();

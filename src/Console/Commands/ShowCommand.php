@@ -25,13 +25,13 @@ class ShowCommand extends Command
         $number = (int) $this->argument('issue');
 
         $issue = spin(
-            fn () => $housekeeping->getIssue($repo, $number),
+            fn (): array => $housekeeping->getIssue($repo, $number),
             'Fetching issue...'
         );
 
         if ($this->option('brief')) {
             $this->line("<info>#{$issue['number']}</info> {$issue['title']}");
-            $this->line(str($issue['body'] ?? '')->limit(250));
+            $this->line((string) str($issue['body'] ?? '')->limit(250));
 
             return self::SUCCESS;
         }
@@ -56,7 +56,7 @@ class ShowCommand extends Command
         $this->newLine();
 
         $comments = spin(
-            fn () => $housekeeping->getComments($repo, $number),
+            fn (): array => $housekeeping->getComments($repo, $number),
             'Fetching comments...'
         );
 

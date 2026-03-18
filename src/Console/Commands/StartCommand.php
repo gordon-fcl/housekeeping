@@ -23,7 +23,7 @@ class StartCommand extends Command
         $number = (int) $this->argument('issue');
 
         $issue = spin(
-            fn () => $housekeeping->getIssue($repo, $number),
+            fn (): array => $housekeeping->getIssue($repo, $number),
             'Fetching issue...'
         );
 

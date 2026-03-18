@@ -91,11 +91,11 @@ final class Housekeeping
     }
 
     /**
-     * @param array<int, string> $args
+     * @param  array<int, string>  $args
      */
     private function git(array $args): void
     {
-        $command = 'git '.implode(' ', array_map('escapeshellarg', $args));
+        $command = 'git '.implode(' ', array_map(escapeshellarg(...), $args));
         $result = null;
         $output = [];
 

@@ -24,12 +24,12 @@ class ExportCommand extends Command
         $number = (int) $this->argument('issue');
 
         $issue = spin(
-            fn () => $housekeeping->getIssue($repo, $number),
+            fn (): array => $housekeeping->getIssue($repo, $number),
             'Fetching issue...'
         );
 
         $comments = spin(
-            fn () => $housekeeping->getComments($repo, $number),
+            fn (): array => $housekeeping->getComments($repo, $number),
             'Fetching comments...'
         );
 
@@ -42,7 +42,7 @@ class ExportCommand extends Command
             'labels' => collect($issue['labels'] ?? [])->pluck('name')->all(),
             'created_at' => $issue['created_at'],
             'updated_at' => $issue['updated_at'],
-            'comments' => collect($comments)->map(fn (array $comment) => [
+            'comments' => collect($comments)->map(fn (array $comment): array => [
                 'author' => $comment['user']['login'] ?? null,
                 'body' => $comment['body'],
                 'created_at' => $comment['created_at'],

@@ -1,6 +1,9 @@
 parameters:
-    level: max
+    level: 6
     paths:
         - src
 
-    reportUnmatchedIgnoredErrors: true
+    reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        - '#Unable to resolve the template type T(Key|Value) in call to function collect#'

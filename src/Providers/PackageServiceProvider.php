@@ -9,6 +9,7 @@ use FCL\Housekeeping\Console\Commands\HousekeepingCommand;
 use FCL\Housekeeping\Console\Commands\ShowCommand;
 use FCL\Housekeeping\Console\Commands\StartCommand;
 use FCL\Housekeeping\Housekeeping;
+use GrahamCampbell\GitHub\GitHubServiceProvider;
 use Illuminate\Support\ServiceProvider;
 
 class PackageServiceProvider extends ServiceProvider
@@ -19,7 +20,7 @@ class PackageServiceProvider extends ServiceProvider
 
         $this->configureGitHub();
 
-        $this->app->register(\GrahamCampbell\GitHub\GitHubServiceProvider::class);
+        $this->app->register(GitHubServiceProvider::class);
 
         $this->app->singleton(Housekeeping::class);
     }
