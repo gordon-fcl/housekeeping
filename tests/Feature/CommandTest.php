@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use DG\BypassFinals;
 use FCL\Housekeeping\Housekeeping;
-use Illuminate\Support\Facades\Artisan;
 use Mockery\MockInterface;
 
 beforeEach(function () {
@@ -65,7 +64,7 @@ it('shows brief issue detail with the brief flag', function () {
         ->assertSuccessful();
 });
 
-it('exports an issue as json', function () {
+it('exports an issue as json to a file', function () {
     $this->mock(Housekeeping::class, function (MockInterface $mock) {
         $mock->shouldReceive('getIssue')
             ->with('my-repo', 3)
@@ -93,40 +92,20 @@ it('exports an issue as json', function () {
             ]);
     });
 
-    Artisan::call('housekeeping:export', ['repo' => 'my-repo', 'issue' => 3]);
-    $output = Artisan::output();
+    $path = sys_get_temp_dir().'/housekeeping-test-issue-3.json';
 
-    expect($output)->toContain('"title":"Add dark mode"');
-    expect($output)->toContain('"author":"gordon"');
-    expect($output)->toContain('I can help with this.');
-});
+    $this->artisan('housekeeping:export', ['repo' => 'my-repo', 'issue' => 3])
+        ->expectsQuestion('Save JSON to', $path)
+        ->expectsOutputToContain("Saved to {$path}")
+        ->assertSuccessful();
 
-it('exports an issue as pretty json', function () {
-    $this->mock(Housekeeping::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getIssue')
-            ->with('my-repo', 3)
-            ->once()
-            ->andReturn([
-                'number' => 3,
-                'title' => 'Add dark mode',
-                'body' => 'Users want dark mode.',
-                'user' => ['login' => 'gordon'],
-                'assignees' => [],
-                'labels' => [],
-                'created_at' => '2026-01-01T00:00:00Z',
-                'updated_at' => '2026-01-05T00:00:00Z',
-            ]);
+    $json = json_decode(file_get_contents($path), true);
 
-        $mock->shouldReceive('getComments')
-            ->with('my-repo', 3)
-            ->once()
-            ->andReturn([]);
-    });
+    expect($json['title'])->toBe('Add dark mode');
+    expect($json['author'])->toBe('gordon');
+    expect($json['comments'][0]['body'])->toBe('I can help with this.');
 
-    Artisan::call('housekeeping:export', ['repo' => 'my-repo', 'issue' => 3, '--pretty' => true]);
-    $output = Artisan::output();
-
-    expect($output)->toContain('"title": "Add dark mode"');
+    unlink($path);
 });
 
 it('starts work on an issue by creating a branch and assigning', function () {

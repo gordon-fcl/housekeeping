@@ -170,7 +170,7 @@ class HousekeepingCommand extends Command
         match ($action) {
             'comments' => $this->showComments($issue),
             'start' => $this->call('housekeeping:start', ['repo' => $this->repo, 'issue' => $number]),
-            'export' => $this->call('housekeeping:export', ['repo' => $this->repo, 'issue' => $number, '--pretty' => true]),
+            'export' => $this->call('housekeeping:export', ['repo' => $this->repo, 'issue' => $number]),
             'back' => $this->labelLoop(),
             'exit' => null,
             default => null,

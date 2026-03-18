@@ -8,13 +8,13 @@ use FCL\Housekeeping\Housekeeping;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\spin;
+use function Laravel\Prompts\text;
 
 class ExportCommand extends Command
 {
     protected $signature = 'housekeeping:export
         {repo : The repository name}
-        {issue : The issue number}
-        {--pretty : Pretty-print the JSON output}';
+        {issue : The issue number}';
 
     protected $description = 'Export a GitHub issue and its comments as JSON';
 
@@ -49,9 +49,18 @@ class ExportCommand extends Command
             ])->all(),
         ];
 
-        $flags = $this->option('pretty') ? JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES : JSON_UNESCAPED_SLASHES;
+        $flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES;
+        $json = json_encode($output, $flags);
 
-        $this->line(json_encode($output, $flags));
+        $default = base_path("issue-{$number}.json");
+        $path = text(
+            label: 'Save JSON to',
+            default: $default,
+            required: true,
+        );
+
+        file_put_contents($path, $json."\n");
+        $this->info("Saved to {$path}");
 
         return self::SUCCESS;
     }
