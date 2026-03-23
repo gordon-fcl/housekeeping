@@ -14,7 +14,8 @@ class ExportCommand extends Command
 {
     protected $signature = 'housekeeping:export
         {repo : The repository name}
-        {issue : The issue number}';
+        {issue : The issue number}
+        {--output= : File path to write JSON to (skips interactive prompt)}';
 
     protected $description = 'Export a GitHub issue and its comments as JSON';
 
@@ -53,7 +54,7 @@ class ExportCommand extends Command
         $json = json_encode($output, $flags);
 
         $default = base_path("issue-{$number}.json");
-        $path = text(
+        $path = $this->option('output') ?? text(
             label: 'Save JSON to',
             default: $default,
             required: true,
