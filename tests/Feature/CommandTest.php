@@ -177,18 +177,24 @@ it('exports an issue non-interactively with the output option', function () {
             ->andReturn([]);
     });
 
-    $path = sys_get_temp_dir().'/housekeeping-test-export-output.json';
+    $tmpPath = tempnam(sys_get_temp_dir(), 'housekeeping-test-export-output-');
+    $path = $tmpPath . '.json';
+    rename($tmpPath, $path);
 
-    $this->artisan('housekeeping:export', ['repo' => 'my-repo', 'issue' => 3, '--output' => $path])
-        ->expectsOutputToContain("Saved to {$path}")
-        ->assertSuccessful();
+    try {
+        $this->artisan('housekeeping:export', ['repo' => 'my-repo', 'issue' => 3, '--output' => $path])
+            ->expectsOutputToContain("Saved to {$path}")
+            ->assertSuccessful();
 
-    $json = json_decode(file_get_contents($path), true);
+        $json = json_decode(file_get_contents($path), true);
 
-    expect($json['title'])->toBe('Add dark mode');
-    expect($json['author'])->toBe('gordon');
-
-    unlink($path);
+        expect($json['title'])->toBe('Add dark mode');
+        expect($json['author'])->toBe('gordon');
+    } finally {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
 });
 
 it('exports all open issues to a file', function () {
