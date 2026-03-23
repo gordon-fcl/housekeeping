@@ -238,21 +238,28 @@ it('exports all open issues to a file', function () {
             ->andReturn([]);
     });
 
-    $path = sys_get_temp_dir().'/housekeeping-test-export-all.json';
+    $path = tempnam(sys_get_temp_dir(), 'housekeeping-test-export-all-');
+    if ($path === false) {
+        $this->fail('Failed to create temporary file for export-all test.');
+    }
 
-    $this->artisan('housekeeping:export-all', ['repo' => 'my-repo', '--output' => $path])
-        ->expectsOutputToContain('Exported 2 issues')
-        ->assertSuccessful();
+    try {
+        $this->artisan('housekeeping:export-all', ['repo' => 'my-repo', '--output' => $path])
+            ->expectsOutputToContain('Exported 2 issues')
+            ->assertSuccessful();
 
-    $json = json_decode(file_get_contents($path), true);
+        $json = json_decode(file_get_contents($path), true);
 
-    expect($json)->toHaveCount(2);
-    expect($json[0]['title'])->toBe('First issue');
-    expect($json[0]['comments'][0]['body'])->toBe('Looks like a bug.');
-    expect($json[1]['title'])->toBe('Second issue');
-    expect($json[1]['comments'])->toBeEmpty();
-
-    unlink($path);
+        expect($json)->toHaveCount(2);
+        expect($json[0]['title'])->toBe('First issue');
+        expect($json[0]['comments'][0]['body'])->toBe('Looks like a bug.');
+        expect($json[1]['title'])->toBe('Second issue');
+        expect($json[1]['comments'])->toBeEmpty();
+    } finally {
+        if (is_string($path) && file_exists($path)) {
+            unlink($path);
+        }
+    }
 });
 
 it('handles no open issues gracefully in export-all', function () {
