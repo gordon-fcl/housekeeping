@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FCL\Housekeeping\Providers;
 
+use FCL\Housekeeping\Console\Commands\ExportAllCommand;
 use FCL\Housekeeping\Console\Commands\ExportCommand;
 use FCL\Housekeeping\Console\Commands\HousekeepingCommand;
 use FCL\Housekeeping\Console\Commands\ShowCommand;
@@ -37,6 +38,7 @@ class PackageServiceProvider extends ServiceProvider
                 ShowCommand::class,
                 StartCommand::class,
                 ExportCommand::class,
+                ExportAllCommand::class,
             ]);
         }
     }
