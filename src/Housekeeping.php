@@ -4,32 +4,36 @@ declare(strict_types=1);
 
 namespace FCL\Housekeeping;
 
-use GrahamCampbell\GitHub\Facades\GitHub;
+use FCL\Housekeeping\GitHub\Client;
 use Illuminate\Support\Str;
 
-final class Housekeeping
+final readonly class Housekeeping
 {
+    public function __construct(
+        private Client $github = new Client,
+    ) {}
+
+    public function github(): Client
+    {
+        return $this->github;
+    }
+
     /** @return array<int, array<string, mixed>> */
     public function getRepos(): array
     {
-        /** @phpstan-ignore-next-line */
-        return GitHub::me()->repositories();
+        return $this->github->repos();
     }
 
     /** @return array<int, array<string, mixed>> */
     public function getRepoLabels(string $repo): array
     {
-        /** @phpstan-ignore-next-line */
-        return GitHub::api('repo')->labels()->all($this->username(), $repo);
+        return $this->github->labels($repo);
     }
 
     /** @return array<int, array<string, mixed>> */
     public function getAllOpenIssues(string $repo): array
     {
-        /** @phpstan-ignore-next-line */
-        return GitHub::api('issues')->all($this->username(), $repo, [
-            'state' => 'open',
-        ]);
+        return $this->github->issues($repo);
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -37,33 +41,24 @@ final class Housekeeping
     {
         $label ??= config('housekeeping.label', 'housekeeping');
 
-        /** @phpstan-ignore-next-line */
-        return GitHub::api('issues')->all($this->username(), $repo, [
-            'state' => 'open',
-            'labels' => $label,
-        ]);
+        return $this->github->issues($repo, ['labels' => $label]);
     }
 
     /** @return array<string, mixed> */
     public function getIssue(string $repo, int $number): array
     {
-        /** @phpstan-ignore-next-line */
-        return GitHub::api('issues')->show($this->username(), $repo, $number);
+        return $this->github->issue($repo, $number);
     }
 
     /** @return array<int, array<string, mixed>> */
     public function getComments(string $repo, int $number): array
     {
-        /** @phpstan-ignore-next-line */
-        return GitHub::api('issues')->comments()->all($this->username(), $repo, $number);
+        return $this->github->comments($repo, $number);
     }
 
     public function assignIssue(string $repo, int $number): void
     {
-        /** @phpstan-ignore-next-line */
-        GitHub::api('issues')->update($this->username(), $repo, $number, [
-            'assignees' => [$this->username()],
-        ]);
+        $this->github->assignIssue($repo, $number);
     }
 
     /**
@@ -86,13 +81,10 @@ final class Housekeeping
 
     public function username(): string
     {
-        /** @phpstan-ignore-next-line */
-        return GitHub::api('currentUser')->show()['login'];
+        return $this->github->username();
     }
 
-    /**
-     * @param  array<int, string>  $args
-     */
+    /** @param array<int, string> $args */
     private function git(array $args): void
     {
         $command = 'git '.implode(' ', array_map(escapeshellarg(...), $args));
