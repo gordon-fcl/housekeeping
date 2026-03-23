@@ -154,3 +154,123 @@ it('handles git failure gracefully when starting work', function () {
         ->expectsOutputToContain('Git operation failed')
         ->assertFailed();
 });
+
+it('exports an issue non-interactively with the output option', function () {
+    $this->mock(Housekeeping::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getIssue')
+            ->with('my-repo', 3)
+            ->once()
+            ->andReturn([
+                'number' => 3,
+                'title' => 'Add dark mode',
+                'body' => 'Users want dark mode.',
+                'user' => ['login' => 'gordon'],
+                'assignees' => [],
+                'labels' => [],
+                'created_at' => '2026-01-01T00:00:00Z',
+                'updated_at' => '2026-01-05T00:00:00Z',
+            ]);
+
+        $mock->shouldReceive('getComments')
+            ->with('my-repo', 3)
+            ->once()
+            ->andReturn([]);
+    });
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'housekeeping-test-export-output-');
+    $path = $tmpPath.'.json';
+    rename($tmpPath, $path);
+
+    try {
+        $this->artisan('housekeeping:export', ['repo' => 'my-repo', 'issue' => 3, '--output' => $path])
+            ->expectsOutputToContain("Saved to {$path}")
+            ->assertSuccessful();
+
+        $json = json_decode(file_get_contents($path), true);
+
+        expect($json['title'])->toBe('Add dark mode');
+        expect($json['author'])->toBe('gordon');
+    } finally {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
+});
+
+it('exports all open issues to a file', function () {
+    $this->mock(Housekeeping::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getAllOpenIssues')
+            ->with('my-repo')
+            ->once()
+            ->andReturn([
+                [
+                    'number' => 1,
+                    'title' => 'First issue',
+                    'body' => 'Description one.',
+                    'user' => ['login' => 'gordon'],
+                    'assignees' => [],
+                    'labels' => [['name' => 'bug']],
+                    'created_at' => '2026-01-01T00:00:00Z',
+                    'updated_at' => '2026-01-02T00:00:00Z',
+                ],
+                [
+                    'number' => 2,
+                    'title' => 'Second issue',
+                    'body' => 'Description two.',
+                    'user' => ['login' => 'gordon'],
+                    'assignees' => [],
+                    'labels' => [],
+                    'created_at' => '2026-01-03T00:00:00Z',
+                    'updated_at' => '2026-01-04T00:00:00Z',
+                ],
+            ]);
+
+        $mock->shouldReceive('getComments')
+            ->with('my-repo', 1)
+            ->once()
+            ->andReturn([
+                ['user' => ['login' => 'reviewer'], 'body' => 'Looks like a bug.', 'created_at' => '2026-01-02T00:00:00Z'],
+            ]);
+
+        $mock->shouldReceive('getComments')
+            ->with('my-repo', 2)
+            ->once()
+            ->andReturn([]);
+    });
+
+    $path = tempnam(sys_get_temp_dir(), 'housekeeping-test-export-all-');
+    if ($path === false) {
+        $this->fail('Failed to create temporary file for export-all test.');
+    }
+
+    try {
+        $this->artisan('housekeeping:export-all', ['repo' => 'my-repo', '--output' => $path])
+            ->expectsOutputToContain('Exported 2 issues')
+            ->assertSuccessful();
+
+        $json = json_decode(file_get_contents($path), true);
+
+        expect($json)->toHaveCount(2);
+        expect($json[0]['title'])->toBe('First issue');
+        expect($json[0]['comments'][0]['body'])->toBe('Looks like a bug.');
+        expect($json[1]['title'])->toBe('Second issue');
+        expect($json[1]['comments'])->toBeEmpty();
+    } finally {
+        if (is_string($path) && file_exists($path)) {
+            unlink($path);
+        }
+    }
+});
+
+it('handles no open issues gracefully in export-all', function () {
+    $this->mock(Housekeeping::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getAllOpenIssues')
+            ->with('my-repo')
+            ->once()
+            ->andReturn([]);
+    });
+
+    $this->artisan('housekeeping:export-all', ['repo' => 'my-repo'])
+        ->expectsOutputToContain('No open issues found')
+        ->assertSuccessful();
+});
