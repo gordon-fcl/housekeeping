@@ -178,7 +178,7 @@ it('exports an issue non-interactively with the output option', function () {
     });
 
     $tmpPath = tempnam(sys_get_temp_dir(), 'housekeeping-test-export-output-');
-    $path = $tmpPath . '.json';
+    $path = $tmpPath.'.json';
     rename($tmpPath, $path);
 
     try {
