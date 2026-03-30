@@ -59,4 +59,35 @@ class Client
             'assignees' => [$this->username()],
         ]);
     }
+
+    /** @param array<int, string> $labels */
+    public function addLabels(string $repo, int $number, array $labels): void
+    {
+        /** @phpstan-ignore-next-line */
+        GitHub::api('issues')->labels()->add($this->username(), $repo, $number, $labels);
+    }
+
+    /** @param array<int, string> $labels */
+    public function removeLabels(string $repo, int $number, array $labels): void
+    {
+        foreach ($labels as $label) {
+            /** @phpstan-ignore-next-line */
+            GitHub::api('issues')->labels()->remove($this->username(), $repo, $number, $label);
+        }
+    }
+
+    public function createLabel(string $repo, string $name, string $colour): void
+    {
+        /** @phpstan-ignore-next-line */
+        GitHub::api('repo')->labels()->create($this->username(), $repo, [
+            'name' => $name,
+            'color' => ltrim($colour, '#'),
+        ]);
+    }
+
+    public function deleteLabel(string $repo, string $name): void
+    {
+        /** @phpstan-ignore-next-line */
+        GitHub::api('repo')->labels()->deleteLabel($this->username(), $repo, $name);
+    }
 }
