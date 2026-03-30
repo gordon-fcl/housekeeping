@@ -62,14 +62,22 @@ final readonly class Housekeeping
     }
 
     /**
-     * Create and check out a branch for the given issue.
+     * Generate a suggested branch name for an issue.
+     */
+    public function suggestBranchName(string $issueTitle, int $issueNumber): string
+    {
+        $slug = Str::slug(Str::limit($issueTitle, 40, ''));
+
+        return "housekeeping/{$issueNumber}-{$slug}";
+    }
+
+    /**
+     * Create and check out a branch.
      *
      * @return string The branch name that was created.
      */
-    public function createBranch(string $issueTitle, int $issueNumber): string
+    public function createBranch(string $branch): string
     {
-        $slug = Str::slug(Str::limit($issueTitle, 40, ''));
-        $branch = "housekeeping/{$issueNumber}-{$slug}";
         $base = config('housekeeping.base_branch', 'staging');
 
         $this->git(['checkout', $base]);

@@ -7,6 +7,8 @@ namespace FCL\Housekeeping\Providers;
 use FCL\Housekeeping\Console\Commands\ExportAllCommand;
 use FCL\Housekeeping\Console\Commands\ExportCommand;
 use FCL\Housekeeping\Console\Commands\HousekeepingCommand;
+use FCL\Housekeeping\Console\Commands\LabelCommand;
+use FCL\Housekeeping\Console\Commands\LabelStatsCommand;
 use FCL\Housekeeping\Console\Commands\ShowCommand;
 use FCL\Housekeeping\Console\Commands\StartCommand;
 use FCL\Housekeeping\Housekeeping;
@@ -39,6 +41,8 @@ class PackageServiceProvider extends ServiceProvider
                 StartCommand::class,
                 ExportCommand::class,
                 ExportAllCommand::class,
+                LabelCommand::class,
+                LabelStatsCommand::class,
             ]);
         }
     }
