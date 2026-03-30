@@ -8,6 +8,7 @@ use FCL\Housekeeping\Housekeeping;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\spin;
+use function Laravel\Prompts\text;
 
 class StartCommand extends Command
 {
@@ -29,8 +30,15 @@ class StartCommand extends Command
 
         $this->line("Starting work on <info>#{$number}</info> {$issue['title']}");
 
+        $suggested = $housekeeping->suggestBranchName($issue['title'], $number);
+        $branch = text(
+            label: 'Branch name',
+            default: $suggested,
+            required: true,
+        );
+
         try {
-            $branch = $housekeeping->createBranch($issue['title'], $number);
+            $housekeeping->createBranch($branch);
         } catch (\RuntimeException $e) {
             $this->error('Git operation failed: '.$e->getMessage());
 

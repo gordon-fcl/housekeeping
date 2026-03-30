@@ -118,8 +118,13 @@ it('starts work on an issue by creating a branch and assigning', function () {
                 'title' => 'Update dependencies',
             ]);
 
-        $mock->shouldReceive('createBranch')
+        $mock->shouldReceive('suggestBranchName')
             ->with('Update dependencies', 7)
+            ->once()
+            ->andReturn('housekeeping/7-update-dependencies');
+
+        $mock->shouldReceive('createBranch')
+            ->with('housekeeping/7-update-dependencies')
             ->once()
             ->andReturn('housekeeping/7-update-dependencies');
 
@@ -129,6 +134,7 @@ it('starts work on an issue by creating a branch and assigning', function () {
     });
 
     $this->artisan('housekeeping:start', ['repo' => 'my-repo', 'issue' => 7])
+        ->expectsQuestion('Branch name', 'housekeeping/7-update-dependencies')
         ->expectsOutputToContain('housekeeping/7-update-dependencies')
         ->expectsOutputToContain('Issue #7 assigned to you')
         ->assertSuccessful();
@@ -144,13 +150,19 @@ it('handles git failure gracefully when starting work', function () {
                 'title' => 'Update dependencies',
             ]);
 
-        $mock->shouldReceive('createBranch')
+        $mock->shouldReceive('suggestBranchName')
             ->with('Update dependencies', 7)
+            ->once()
+            ->andReturn('housekeeping/7-update-dependencies');
+
+        $mock->shouldReceive('createBranch')
+            ->with('housekeeping/7-update-dependencies')
             ->once()
             ->andThrow(new \RuntimeException('branch already exists'));
     });
 
     $this->artisan('housekeeping:start', ['repo' => 'my-repo', 'issue' => 7])
+        ->expectsQuestion('Branch name', 'housekeeping/7-update-dependencies')
         ->expectsOutputToContain('Git operation failed')
         ->assertFailed();
 });
