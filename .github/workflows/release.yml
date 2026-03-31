@@ -32,17 +32,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: startsWith(github.event.head_commit.message, 'release:')
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Extract version and create tag
         run: |
-          VERSION=$(echo "${{ github.event.head_commit.message }}" | head -1 | sed 's/^release: *//')
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "Invalid version: $VERSION"
-            exit 1
+          MESSAGE="${{ github.event.head_commit.message }}"
+          VERSION=$(echo "$MESSAGE" | grep -oE 'release[:/] *[0-9]+\.[0-9]+\.[0-9]+' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          if [ -z "$VERSION" ]; then
+            echo "No release version found in commit message, skipping."
+            exit 0
           fi
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
