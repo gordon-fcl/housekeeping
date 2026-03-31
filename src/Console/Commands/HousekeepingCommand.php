@@ -41,9 +41,37 @@ class HousekeepingCommand extends Command
         $this->repo = $this->selectFrom($repos, 'Choose a repository:');
         $this->info("Selected: {$this->repo}");
 
-        $this->labelLoop();
+        $this->mainMenu();
 
         return self::SUCCESS;
+    }
+
+    private function mainMenu(): void
+    {
+        $action = select(
+            label: 'What would you like to do?',
+            options: [
+                'browse' => 'Browse issues',
+                'labels' => 'Manage labels',
+                'stats' => 'Label statistics',
+                'export-all' => 'Export all issues to JSON',
+                'exit' => 'Exit',
+            ],
+        );
+
+        match ($action) {
+            'browse' => $this->labelLoop(),
+            'labels' => $this->callAndReturn('housekeeping:label', ['repo' => $this->repo]),
+            'stats' => $this->callAndReturn('housekeeping:label-stats', ['repo' => $this->repo]),
+            'export-all' => $this->callAndReturn('housekeeping:export-all', ['repo' => $this->repo]),
+            default => null,
+        };
+    }
+
+    private function callAndReturn(string $command, array $arguments = []): void
+    {
+        $this->call($command, $arguments);
+        $this->mainMenu();
     }
 
     private function labelLoop(): void
@@ -171,7 +199,7 @@ class HousekeepingCommand extends Command
             'comments' => $this->showComments($issue),
             'start' => $this->call('housekeeping:start', ['repo' => $this->repo, 'issue' => $number]),
             'export' => $this->call('housekeeping:export', ['repo' => $this->repo, 'issue' => $number]),
-            'back' => $this->labelLoop(),
+            'back' => $this->mainMenu(),
             'exit' => null,
             default => null,
         };
