@@ -68,6 +68,7 @@ class HousekeepingCommand extends Command
         };
     }
 
+    /** @param array<string, mixed> $arguments */
     private function callAndReturn(string $command, array $arguments = []): void
     {
         $this->call($command, $arguments);
@@ -240,6 +241,9 @@ class HousekeepingCommand extends Command
             placeholder: "E.g. {$names[0]}",
             scroll: 6,
             required: true,
+            validate: fn (string $value): ?string => in_array($value, $names, true)
+                ? null
+                : 'Please select a valid option from the list.',
         );
     }
 }

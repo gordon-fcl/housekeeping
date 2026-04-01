@@ -58,6 +58,9 @@ class ExportCommand extends Command
             label: 'Save JSON to',
             default: $default,
             required: true,
+            validate: fn (string $value): ?string => is_dir(dirname($value))
+                ? null
+                : 'Directory does not exist.',
         );
 
         file_put_contents($path, $json."\n");

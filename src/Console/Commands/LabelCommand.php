@@ -44,7 +44,11 @@ class LabelCommand extends Command
 
     private function addLabels(Housekeeping $housekeeping, string $repo): int
     {
-        $number = (int) text(label: 'Issue number', required: true);
+        $number = (int) text(
+            label: 'Issue number',
+            required: true,
+            validate: fn (string $value): ?string => ctype_digit($value) ? null : 'Please enter a valid number.',
+        );
 
         $labels = spin(
             fn (): array => $housekeeping->getRepoLabels($repo),
@@ -71,7 +75,11 @@ class LabelCommand extends Command
 
     private function removeLabels(Housekeeping $housekeeping, string $repo): int
     {
-        $number = (int) text(label: 'Issue number', required: true);
+        $number = (int) text(
+            label: 'Issue number',
+            required: true,
+            validate: fn (string $value): ?string => ctype_digit($value) ? null : 'Please enter a valid number.',
+        );
 
         $issue = spin(
             fn (): array => $housekeeping->getIssue($repo, $number),
@@ -105,7 +113,13 @@ class LabelCommand extends Command
     private function createLabel(Housekeeping $housekeeping, string $repo): int
     {
         $name = text(label: 'Label name', required: true);
-        $colour = text(label: 'Colour (hex, e.g. ff0000)', required: true);
+        $colour = text(
+            label: 'Colour (hex, e.g. ff0000)',
+            required: true,
+            validate: fn (string $value): ?string => preg_match('/^#?[0-9a-fA-F]{6}$/', $value)
+                ? null
+                : 'Please enter a valid 6-character hex colour.',
+        );
 
         spin(
             fn () => $housekeeping->github()->createLabel($repo, $name, $colour),
