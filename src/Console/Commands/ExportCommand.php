@@ -7,6 +7,7 @@ namespace FCL\Housekeeping\Console\Commands;
 use FCL\Housekeeping\Housekeeping;
 use Illuminate\Console\Command;
 
+use function Laravel\Prompts\note;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
 
@@ -64,7 +65,7 @@ class ExportCommand extends Command
         );
 
         file_put_contents($path, $json."\n");
-        $this->info("Saved to {$path}");
+        note("Saved to {$path}");
 
         return self::SUCCESS;
     }

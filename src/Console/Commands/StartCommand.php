@@ -7,6 +7,7 @@ namespace FCL\Housekeeping\Console\Commands;
 use FCL\Housekeeping\Housekeeping;
 use Illuminate\Console\Command;
 
+use function Laravel\Prompts\note;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
 
@@ -51,8 +52,8 @@ class StartCommand extends Command
         );
 
         $this->newLine();
-        $this->info("Branch: {$branch}");
-        $this->info("Issue #{$number} assigned to you.");
+        note("Branch: {$branch}");
+        note("Issue #{$number} assigned to you.");
 
         return self::SUCCESS;
     }

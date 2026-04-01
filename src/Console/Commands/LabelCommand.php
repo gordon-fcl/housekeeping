@@ -8,6 +8,7 @@ use FCL\Housekeeping\Housekeeping;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\multiselect;
+use function Laravel\Prompts\note;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
@@ -68,7 +69,7 @@ class LabelCommand extends Command
             'Adding labels...'
         );
 
-        $this->info('Labels added to issue #'.$number.'.');
+        note('Labels added to issue #'.$number.'.');
 
         return self::SUCCESS;
     }
@@ -89,7 +90,7 @@ class LabelCommand extends Command
         $current = collect($issue['labels'] ?? [])->pluck('name')->all();
 
         if (empty($current)) {
-            $this->info('Issue #'.$number.' has no labels.');
+            note('Issue #'.$number.' has no labels.');
 
             return self::SUCCESS;
         }
@@ -105,7 +106,7 @@ class LabelCommand extends Command
             'Removing labels...'
         );
 
-        $this->info('Labels removed from issue #'.$number.'.');
+        note('Labels removed from issue #'.$number.'.');
 
         return self::SUCCESS;
     }
@@ -126,7 +127,7 @@ class LabelCommand extends Command
             'Creating label...'
         );
 
-        $this->info("Label '{$name}' created.");
+        note("Label '{$name}' created.");
 
         return self::SUCCESS;
     }
@@ -150,7 +151,7 @@ class LabelCommand extends Command
             'Deleting label...'
         );
 
-        $this->info("Label '{$name}' deleted.");
+        note("Label '{$name}' deleted.");
 
         return self::SUCCESS;
     }

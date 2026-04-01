@@ -8,6 +8,7 @@ use FCL\Housekeeping\Housekeeping;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
+use function Laravel\Prompts\note;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\suggest;
@@ -39,7 +40,7 @@ class HousekeepingCommand extends Command
         }
 
         $this->repo = $this->selectFrom($repos, 'Choose a repository:');
-        $this->info("Selected: {$this->repo}");
+        note("Repository: {$this->repo}");
 
         $this->mainMenu();
 
@@ -111,7 +112,7 @@ class HousekeepingCommand extends Command
             );
         }
 
-        $this->info("Selected: {$tag}");
+        note("Label: {$tag}");
 
         $issues = $allIssues->filter(fn (array $issue) => collect($issue['labels'] ?? [])
             ->pluck('name')
