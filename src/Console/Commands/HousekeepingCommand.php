@@ -191,6 +191,7 @@ class HousekeepingCommand extends Command
             options: [
                 'comments' => 'View comments',
                 'start' => 'Start work on this issue',
+                'brief' => 'Generate AI brief',
                 'export' => 'Export as JSON',
                 'back' => 'Back to issue list',
                 'exit' => 'Exit',
@@ -200,6 +201,7 @@ class HousekeepingCommand extends Command
         match ($action) {
             'comments' => $this->showComments($issue),
             'start' => $this->call('housekeeping:start', ['repo' => $this->repo, 'issue' => $number]),
+            'brief' => $this->call('housekeeping:brief', ['repo' => $this->repo, 'issue' => $number]),
             'export' => $this->call('housekeeping:export', ['repo' => $this->repo, 'issue' => $number]),
             'back' => $this->mainMenu(),
             'exit' => null,

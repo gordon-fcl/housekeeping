@@ -286,3 +286,52 @@ it('handles no open issues gracefully in export-all', function () {
         ->expectsOutputToContain('No open issues found')
         ->assertSuccessful();
 });
+
+it('generates an ai brief filtering bot comments', function () {
+    $this->mock(Housekeeping::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getIssue')
+            ->with('my-repo', 5)
+            ->once()
+            ->andReturn([
+                'number' => 5,
+                'title' => 'Fix login redirect',
+                'body' => 'Users are redirected to the wrong page.',
+                'user' => ['login' => 'gordon'],
+                'assignees' => [['login' => 'gordon']],
+                'labels' => [['name' => 'bug']],
+                'created_at' => '2026-01-01T00:00:00Z',
+                'updated_at' => '2026-01-02T00:00:00Z',
+            ]);
+
+        $mock->shouldReceive('getComments')
+            ->with('my-repo', 5)
+            ->once()
+            ->andReturn([
+                ['user' => ['login' => 'gordon'], 'body' => 'I can reproduce this.', 'created_at' => '2026-01-01T12:00:00Z'],
+                ['user' => ['login' => 'github-actions'], 'body' => 'CI passed.', 'created_at' => '2026-01-01T13:00:00Z'],
+                ['user' => ['login' => 'dependabot[bot]'], 'body' => 'Bump deps.', 'created_at' => '2026-01-01T14:00:00Z'],
+            ]);
+
+        $mock->shouldReceive('suggestBranchName')
+            ->with('Fix login redirect', 5)
+            ->once()
+            ->andReturn('housekeeping/5-fix-login-redirect');
+    });
+
+    $path = sys_get_temp_dir().'/housekeeping-test-brief.md';
+
+    $this->artisan('housekeeping:brief', ['repo' => 'my-repo', 'issue' => 5, '--output' => $path])
+        ->expectsConfirmation('Would you like to add additional context for the agent?', 'no')
+        ->assertSuccessful();
+
+    $content = file_get_contents($path);
+
+    expect($content)->toContain('Fix login redirect');
+    expect($content)->toContain('Users are redirected to the wrong page.');
+    expect($content)->toContain('I can reproduce this.');
+    expect($content)->not->toContain('CI passed.');
+    expect($content)->not->toContain('Bump deps.');
+    expect($content)->toContain('housekeeping/5-fix-login-redirect');
+
+    unlink($path);
+});
