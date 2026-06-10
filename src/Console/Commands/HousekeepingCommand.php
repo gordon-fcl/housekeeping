@@ -76,6 +76,17 @@ class HousekeepingCommand extends Command
         $this->mainMenu();
     }
 
+    /**
+     * @param  array<string, mixed>  $issue
+     * @param  Collection<int, array<string, mixed>>  $issues
+     * @param  array<string, mixed>  $arguments
+     */
+    private function callAndReturnToIssue(string $command, array $issue, Collection $issues, array $arguments = []): void
+    {
+        $this->call($command, $arguments);
+        $this->issueActions($issue, $issues);
+    }
+
     private function labelLoop(): void
     {
         $data = spin(fn (): array => [
@@ -145,19 +156,30 @@ class HousekeepingCommand extends Command
             $issue['number'] => "#{$issue['number']} {$issue['title']}",
         ])->toArray();
 
+        $choices['menu'] = 'Main menu';
+
         $selected = select(
             label: 'Select an issue to view:',
             options: $choices,
             scroll: 10,
         );
 
+        if ($selected === 'menu') {
+            $this->mainMenu();
+
+            return;
+        }
+
         $issue = $issues->firstWhere('number', (int) $selected);
 
-        $this->issueDetail($issue);
+        $this->issueDetail($issue, $issues);
     }
 
-    /** @param array<string, mixed> $issue */
-    private function issueDetail(array $issue): void
+    /**
+     * @param  array<string, mixed>  $issue
+     * @param  Collection<int, array<string, mixed>>  $issues
+     */
+    private function issueDetail(array $issue, Collection $issues): void
     {
         $this->newLine();
         $this->line("<info>#{$issue['number']}</info> <comment>{$issue['title']}</comment>");
@@ -178,11 +200,14 @@ class HousekeepingCommand extends Command
         $this->line($issue['body'] ?? 'No description.');
         $this->newLine();
 
-        $this->issueActions($issue);
+        $this->issueActions($issue, $issues);
     }
 
-    /** @param array<string, mixed> $issue */
-    private function issueActions(array $issue): void
+    /**
+     * @param  array<string, mixed>  $issue
+     * @param  Collection<int, array<string, mixed>>  $issues
+     */
+    private function issueActions(array $issue, Collection $issues): void
     {
         $number = $issue['number'];
 
@@ -194,23 +219,28 @@ class HousekeepingCommand extends Command
                 'brief' => 'Generate AI brief',
                 'export' => 'Export as JSON',
                 'back' => 'Back to issue list',
+                'menu' => 'Main menu',
                 'exit' => 'Exit',
             ],
         );
 
         match ($action) {
-            'comments' => $this->showComments($issue),
-            'start' => $this->call('housekeeping:start', ['repo' => $this->repo, 'issue' => $number]),
-            'brief' => $this->call('housekeeping:brief', ['repo' => $this->repo, 'issue' => $number]),
-            'export' => $this->call('housekeeping:export', ['repo' => $this->repo, 'issue' => $number]),
-            'back' => $this->mainMenu(),
+            'comments' => $this->showComments($issue, $issues),
+            'start' => $this->callAndReturnToIssue('housekeeping:start', $issue, $issues, ['repo' => $this->repo, 'issue' => $number]),
+            'brief' => $this->callAndReturnToIssue('housekeeping:brief', $issue, $issues, ['repo' => $this->repo, 'issue' => $number]),
+            'export' => $this->callAndReturnToIssue('housekeeping:export', $issue, $issues, ['repo' => $this->repo, 'issue' => $number]),
+            'back' => $this->issueList($issues),
+            'menu' => $this->mainMenu(),
             'exit' => null,
             default => null,
         };
     }
 
-    /** @param array<string, mixed> $issue */
-    private function showComments(array $issue): void
+    /**
+     * @param  array<string, mixed>  $issue
+     * @param  Collection<int, array<string, mixed>>  $issues
+     */
+    private function showComments(array $issue, Collection $issues): void
     {
         $number = (int) $issue['number'];
 
@@ -230,7 +260,7 @@ class HousekeepingCommand extends Command
             }
         }
 
-        $this->issueActions($issue);
+        $this->issueActions($issue, $issues);
     }
 
     /** @param Collection<int, array<string, mixed>> $items */
