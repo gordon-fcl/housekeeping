@@ -12,17 +12,26 @@ use function Laravel\Prompts\table;
 
 class ShowCommand extends Command
 {
+    use ResolvesIssueArguments;
+
     protected $signature = 'housekeeping:show
-        {repo : The repository name}
-        {issue : The issue number}
+        {repo? : The repository name}
+        {issue? : The issue number}
         {--brief : Show only the title and truncated description}';
 
     protected $description = 'Display a GitHub issue with its comments';
 
     public function handle(Housekeeping $housekeeping): int
     {
-        $repo = $this->argument('repo');
-        $number = (int) $this->argument('issue');
+        $repo = $this->resolveRepo($housekeeping);
+        if (! $repo) {
+            return self::FAILURE;
+        }
+
+        $number = $this->resolveIssueNumber($housekeeping, $repo);
+        if (! $number) {
+            return self::FAILURE;
+        }
 
         $issue = spin(
             fn (): array => $housekeeping->getIssue($repo, $number),
