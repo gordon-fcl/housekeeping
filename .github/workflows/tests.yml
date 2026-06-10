@@ -21,6 +21,6 @@ jobs:
           extensions: dom, mbstring, zip
           coverage: none
 
-      - run: composer update --prefer-stable --no-interaction --prefer-dist
+      - run: composer update --prefer-stable --no-interaction --prefer-dist --no-audit
 
       - run: composer test:unit
