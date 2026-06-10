@@ -13,16 +13,25 @@ use function Laravel\Prompts\text;
 
 class StartCommand extends Command
 {
+    use ResolvesIssueArguments;
+
     protected $signature = 'housekeeping:start
-        {repo : The repository name}
-        {issue : The issue number}';
+        {repo? : The repository name}
+        {issue? : The issue number}';
 
     protected $description = 'Create a branch and assign yourself to a GitHub issue';
 
     public function handle(Housekeeping $housekeeping): int
     {
-        $repo = $this->argument('repo');
-        $number = (int) $this->argument('issue');
+        $repo = $this->resolveRepo($housekeeping);
+        if (! $repo) {
+            return self::FAILURE;
+        }
+
+        $number = $this->resolveIssueNumber($housekeeping, $repo);
+        if (! $number) {
+            return self::FAILURE;
+        }
 
         $issue = spin(
             fn (): array => $housekeeping->getIssue($repo, $number),
