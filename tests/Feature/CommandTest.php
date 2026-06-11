@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use DG\BypassFinals;
 use FCL\Housekeeping\Housekeeping;
 use Mockery\MockInterface;
-
-beforeEach(function () {
-    BypassFinals::enable();
-});
 
 it('shows issue detail with metadata', function () {
     $this->mock(Housekeeping::class, function (MockInterface $mock) {

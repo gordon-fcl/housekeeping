@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use DG\BypassFinals;
 use FCL\Housekeeping\Housekeeping;
 use GrahamCampbell\GitHub\Facades\GitHub;
 use Illuminate\Support\Str;
 use Mockery;
-
-beforeEach(function () {
-    BypassFinals::enable();
-});
 
 function mockUsername(string $login = 'testuser'): void
 {

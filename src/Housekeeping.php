@@ -7,10 +7,10 @@ namespace FCL\Housekeeping;
 use FCL\Housekeeping\GitHub\Client;
 use Illuminate\Support\Str;
 
-final readonly class Housekeeping
+class Housekeeping
 {
     public function __construct(
-        private Client $github = new Client,
+        private readonly Client $github = new Client,
     ) {}
 
     public function github(): Client
