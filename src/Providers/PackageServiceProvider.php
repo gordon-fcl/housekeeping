@@ -11,6 +11,7 @@ use FCL\Housekeeping\Console\Commands\HousekeepingCommand;
 use FCL\Housekeeping\Console\Commands\LabelCommand;
 use FCL\Housekeeping\Console\Commands\LabelStatsCommand;
 use FCL\Housekeeping\Console\Commands\ShowCommand;
+use FCL\Housekeeping\Console\Commands\StalenessCommand;
 use FCL\Housekeeping\Console\Commands\StartCommand;
 use FCL\Housekeeping\Housekeeping;
 use GrahamCampbell\GitHub\GitHubServiceProvider;
@@ -45,6 +46,7 @@ class PackageServiceProvider extends ServiceProvider
                 BriefCommand::class,
                 LabelCommand::class,
                 LabelStatsCommand::class,
+                StalenessCommand::class,
             ]);
         }
     }
