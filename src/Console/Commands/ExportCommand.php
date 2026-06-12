@@ -13,26 +13,17 @@ use function Laravel\Prompts\text;
 
 class ExportCommand extends Command
 {
-    use ResolvesIssueArguments;
-
     protected $signature = 'housekeeping:export
-        {repo? : The repository name}
-        {issue? : The issue number}
+        {repo : The repository name}
+        {issue : The issue number}
         {--output= : File path to write JSON to (skips interactive prompt)}';
 
     protected $description = 'Export a GitHub issue and its comments as JSON';
 
     public function handle(Housekeeping $housekeeping): int
     {
-        $repo = $this->resolveRepo($housekeeping);
-        if (! $repo) {
-            return self::FAILURE;
-        }
-
-        $number = $this->resolveIssueNumber($housekeeping, $repo);
-        if (! $number) {
-            return self::FAILURE;
-        }
+        $repo = $this->argument('repo');
+        $number = (int) $this->argument('issue');
 
         $issue = spin(
             fn (): array => $housekeeping->getIssue($repo, $number),

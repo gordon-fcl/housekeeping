@@ -15,26 +15,17 @@ use function Laravel\Prompts\textarea;
 
 class BriefCommand extends Command
 {
-    use ResolvesIssueArguments;
-
     protected $signature = 'housekeeping:brief
-        {repo? : The repository name}
-        {issue? : The issue number}
+        {repo : The repository name}
+        {issue : The issue number}
         {--output= : File path to write the brief to (skips interactive prompt)}';
 
     protected $description = 'Generate an AI-ready Markdown brief for a GitHub issue';
 
     public function handle(Housekeeping $housekeeping): int
     {
-        $repo = $this->resolveRepo($housekeeping);
-        if (! $repo) {
-            return self::FAILURE;
-        }
-
-        $number = $this->resolveIssueNumber($housekeeping, $repo);
-        if (! $number) {
-            return self::FAILURE;
-        }
+        $repo = $this->argument('repo');
+        $number = (int) $this->argument('issue');
 
         $issue = spin(
             fn (): array => $housekeeping->getIssue($repo, $number),
