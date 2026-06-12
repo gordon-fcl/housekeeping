@@ -53,6 +53,7 @@ class HousekeepingCommand extends Command
             label: 'What would you like to do?',
             options: [
                 'browse' => 'Browse issues',
+                'stale' => 'Check for stale issues',
                 'labels' => 'Manage labels',
                 'stats' => 'Label statistics',
                 'export-all' => 'Export all issues to JSON',
@@ -62,6 +63,7 @@ class HousekeepingCommand extends Command
 
         match ($action) {
             'browse' => $this->labelLoop(),
+            'stale' => $this->callAndReturn('housekeeping:stale', ['repo' => $this->repo]),
             'labels' => $this->callAndReturn('housekeeping:label', ['repo' => $this->repo]),
             'stats' => $this->callAndReturn('housekeeping:label-stats', ['repo' => $this->repo]),
             'export-all' => $this->callAndReturn('housekeeping:export-all', ['repo' => $this->repo]),

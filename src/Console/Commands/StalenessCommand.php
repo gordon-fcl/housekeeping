@@ -13,7 +13,7 @@ use function Laravel\Prompts\table;
 class StalenessCommand extends Command
 {
     protected $signature = 'housekeeping:stale
-        {repo? : The repository name}
+        {repo : The repository name}
         {--days=90 : How far back to search commits}';
 
     protected $description = 'Detect open issues that may have been resolved by recent commits';
@@ -21,29 +21,6 @@ class StalenessCommand extends Command
     public function handle(Housekeeping $housekeeping): int
     {
         $repo = $this->argument('repo');
-
-        if (! $repo) {
-            $repos = collect(spin(
-                fn (): array => $housekeeping->getRepos(),
-                'Fetching repositories...'
-            ));
-
-            if ($repos->isEmpty()) {
-                $this->warn('No repositories found.');
-
-                return self::FAILURE;
-            }
-
-            $names = $repos->pluck('name')->all();
-            $repo = \Laravel\Prompts\suggest(
-                label: 'Choose a repository:',
-                options: $names,
-                required: true,
-                validate: fn (string $value): ?string => in_array($value, $names, true)
-                    ? null
-                    : 'Please select a valid repository.',
-            );
-        }
 
         $issues = spin(
             fn (): array => $housekeeping->getAllOpenIssues($repo),
